@@ -35,10 +35,10 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-EPOCHS = 80
-BATCH_SIZE = 16
-LEARNING_RATE = 0.0003
-RANDOM_SEED = 999
+EPOCHS = 20
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+RANDOM_SEED = 42
 PROJECT_NAME = "Chihuahua-Muffin"
 DATASET_NAME = "chihuahua-muffin"
 NUM_CLASSES = 2  # chihuahua, muffin (undefined excluded from training)
@@ -76,10 +76,10 @@ class ResNet18Classifier(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(resnet_features, 256),
             nn.ReLU(),
-            nn.Dropout(0.1),
+            nn.Dropout(0.5),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Dropout(0.1),
+            nn.Dropout(0.5),
             nn.Linear(128, num_classes),
         )
 
@@ -93,17 +93,16 @@ class ResNet18Classifier(nn.Module):
 # ============================================================================
 
 train_transform = transforms.Compose([
-    transforms.Resize(192),
-    transforms.RandomCrop(192),
+    transforms.Resize(128),
+    transforms.RandomCrop(128),
     transforms.RandomHorizontalFlip(),
-    transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET),
+    transforms.RandomAffine(0, shear=10, scale=(0.8, 1.2)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    transforms.RandomErasing(p=0.2),
 ])
 val_transform = transforms.Compose([
-    transforms.Resize(192),
-    transforms.CenterCrop(192),
+    transforms.Resize(128),
+    transforms.CenterCrop(128),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
@@ -212,9 +211,9 @@ def train():
     val_dataloader = DataLoader(val_table, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
     model = ResNet18Classifier(num_classes=NUM_CLASSES).to(device)
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-    optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
     run = tlc.init(
         project_name=PROJECT_NAME,

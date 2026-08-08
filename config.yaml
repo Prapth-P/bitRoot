@@ -28,11 +28,11 @@ constraints:
 
 # Training Configuration (reference; train.py uses its own constants)
 training:
-  batch_size: 16
+  batch_size: 32
   num_workers: 0
-  epochs: 80
-  learning_rate: 0.0003
-  image_size: 192
+  epochs: 20
+  learning_rate: 0.001
+  image_size: 128
 
 # Scoring (Kaggle: accuracy on hidden test set)
 scoring:
